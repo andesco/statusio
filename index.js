@@ -64,7 +64,7 @@ const getCache = (key) => {
 };
 
 // ----------------------------- Quotes --------------------------------------
-// 14+ days (OK) — include ~30 (smart, funny, + a few "work while watching")
+// 14+ days (OK)
 const QUOTES_OK = [
   // Work-while-watching (5)
   "Grind & binge",
@@ -153,6 +153,56 @@ const QUOTES_EXPIRED = [
 
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
+// ---------------------- Config label → internal mappings -------------------
+const PROVIDERS = [
+  { id: "realdebrid", label: "Real-Debrid" },
+  { id: "alldebrid",  label: "AllDebrid" },
+  { id: "premiumize", label: "Premiumize" },
+  { id: "torbox",     label: "TorBox" },
+  { id: "debridlink", label: "Debrid-Link" },
+];
+
+const PM_AUTH_OPTIONS = [
+  { id: "apikey", label: "apikey (query)" },
+  { id: "oauth",  label: "access_token (OAuth query)" }
+];
+
+const DL_AUTH_OPTIONS = [
+  { id: "Bearer", label: "Authorization: Bearer <token>" },
+  { id: "query",  label: "?apikey=<token>" }
+];
+
+const DEMO_MODE_OPTIONS = [
+  { id: "off",        label: "Off" },
+  { id: "all_active", label: "Simulate all active" },
+  { id: "some_off",   label: "Simulate some inactive" }
+];
+
+function mapLabelsToProviderIds(selectedLabels) {
+  const labels = Array.isArray(selectedLabels) ? selectedLabels : [];
+  const ids = [];
+  for (const lbl of labels) {
+    const match = PROVIDERS.find((p) => p.label === lbl);
+    if (match) ids.push(match.id);
+  }
+  return ids;
+}
+
+function resolvePmAuth(label) {
+  const found = PM_AUTH_OPTIONS.find((o) => o.label === label);
+  return found ? found.id : "apikey";
+}
+
+function resolveDlAuth(label) {
+  const found = DL_AUTH_OPTIONS.find((o) => o.label === label);
+  return found ? found.id : "Bearer";
+}
+
+function resolveDemoMode(label) {
+  const found = DEMO_MODE_OPTIONS.find((o) => o.label === label);
+  return found ? found.id : "off";
+}
+
 // --------------------------- Providers -------------------------------------
 // Each returns:
 // { name, premium: true|false|null, daysLeft: number|null, untilISO: string|null, username?: string, note?: string }
@@ -237,7 +287,6 @@ async function pPremiumize({ key, useOAuth = false, fetchImpl = fetch }) {
 
     const out = daysLeftFromEpochSec(j.premium_until || 0);
     const isPrem = out.days > 0;
-    // Premiumize doesn't expose username here; show customer_id as fallback tag if wanted
     const username = j?.customer_id ? String(j.customer_id) : null;
 
     return isPrem
@@ -328,7 +377,6 @@ function demoResults(profile = "all_active") {
 }
 
 // --------------------------- Rendering -------------------------------------
-// Status selection + quote bucket
 function statusInfo(days) {
   if (days <= 0) return { mark: "🔴 Status: Expired", bucket: QUOTES_EXPIRED };
   if (days <= 3) return { mark: "🟠 Status: Critical", bucket: QUOTES_CRIT };
@@ -346,7 +394,6 @@ function renderProviderCard(r) {
   const { mark, bucket } = statusInfo(Number(days === "—" ? 9999 : days));
   const quote = pick(bucket);
 
-  // Title per provider
   let titlePrefix = "🟢 OK";
   if (mark.startsWith("🟡")) titlePrefix = "🟡 Warning";
   else if (mark.startsWith("🟠")) titlePrefix = "🟠 Critical";
@@ -354,16 +401,15 @@ function renderProviderCard(r) {
 
   const title = `${titlePrefix} — ${service}`;
 
-  // Exactly 8 lines:
   const lines = [
-    "───────────────",
+    "———————————————",
     `🤝 Service: ${service}`,
-    `👤 ${user}`,
+    `👤 @${user}`,
     `⭐ Premium until: ${dateStr}`,
     `⏳ Days remaining: ${days} D`,
     `${mark}`,
     `💬 ${quote}`,
-    "───────────────"
+    "———————————————"
   ].join("\n");
 
   return { title, description: lines };
@@ -372,7 +418,7 @@ function renderProviderCard(r) {
 // --------------------------- Manifest & Config ------------------------------
 const manifest = {
   id: "a1337user.statusio.multi",
-  version: "1.0.4",
+  version: "1.0.5",
   name: "Statusio",
   description: "Shows premium status & days remaining across multiple debrid providers.",
   resources: ["stream"],
@@ -385,17 +431,11 @@ const manifest = {
       name: "providers_enabled",
       type: "select",
       title: "Which debrid services do you use?",
-      options: [
-        { value: "realdebrid", name: "Real-Debrid" },
-        { value: "alldebrid",  name: "AllDebrid" },
-        { value: "premiumize", name: "Premiumize" },
-        { value: "torbox",     name: "TorBox" },
-        { value: "debridlink", name: "Debrid-Link" },
-      ],
+      options: PROVIDERS.map((p) => p.label),
       multiple: true,
       required: false
     },
-    { name: "cache_minutes", type: "number", default: 10, title: "Cache Minutes (default 10)" },
+    { name: "cache_minutes", type: "number", default: 45, title: "Cache Minutes (default 45)" },
 
     // Tokens / keys
     { name: "rd_token", type: "text", title: "Real-Debrid Token (Bearer)" },
@@ -405,11 +445,8 @@ const manifest = {
       name: "pm_auth",
       type: "select",
       title: "Premiumize Auth",
-      options: [
-        { value: "apikey", name: "apikey (query)" },
-        { value: "oauth",  name: "access_token (OAuth query)" }
-      ],
-      default: "apikey"
+      options: PM_AUTH_OPTIONS.map((o) => o.label),
+      default: "apikey (query)"
     },
     { name: "tb_token", type: "text", title: "TorBox Token (Bearer)" },
     {
@@ -419,25 +456,23 @@ const manifest = {
       name: "dl_auth",
       type: "select",
       title: "Debrid-Link Auth Scheme",
-      options: [
-        { value: "Bearer", name: "Authorization: Bearer <token>" },
-        { value: "query",  name: "?apikey=<token>" }
-      ],
-      default: "Bearer"
+      options: DL_AUTH_OPTIONS.map((o) => o.label),
+      default: "Authorization: Bearer <token>"
     },
-    { name: "dl_endpoint", type: "text", title: "Debrid-Link Endpoint Override", default: "https://debrid-link.com/api/account/infos" },
+    {
+      name: "dl_endpoint",
+      type: "text",
+      title: "Debrid-Link Endpoint Override",
+      default: "https://debrid-link.com/api/account/infos"
+    },
 
     // Demo mode
     {
       name: "demo_mode",
       type: "select",
       title: "Demo Mode (simulate without real tokens)",
-      options: [
-        { value: "off",        name: "Off" },
-        { value: "all_active", name: "Simulate all active" },
-        { value: "some_off",   name: "Simulate some inactive" }
-      ],
-      default: "off"
+      options: DEMO_MODE_OPTIONS.map((o) => o.label),
+      default: "Off"
     }
   ]
 };
@@ -452,39 +487,49 @@ builder.defineStreamHandler(async (args) => {
   if (!cfg.rd_token && process.env.RD_TOKEN) {
     cfg.rd_token = process.env.RD_TOKEN;
     if (!Array.isArray(cfg.providers_enabled) || cfg.providers_enabled.length === 0) {
-      cfg.providers_enabled = ["realdebrid"];
+      cfg.providers_enabled = ["Real-Debrid"];
     }
   }
 
-  const cacheMin = Number.isFinite(cfg.cache_minutes) ? Math.max(1, cfg.cache_minutes) : 10;
+  // Turn labels from UI into internal IDs
+  const enabled = mapLabelsToProviderIds(cfg.providers_enabled || []);
+  const pmAuth = resolvePmAuth(cfg.pm_auth);
+  const dlAuth = resolveDlAuth(cfg.dl_auth);
+  const demoProfile = resolveDemoMode(cfg.demo_mode);
 
-  const enabled = (cfg.providers_enabled || []).map(v => String(v).toLowerCase()).sort();
+  const cacheMinVal = parseInt(cfg.cache_minutes, 10);
+  const cacheMin = Number.isFinite(cacheMinVal) ? Math.max(1, cacheMinVal) : 45;
+
   const cacheKey = [
     enabled.join(","),
     `rd:${redact(cfg.rd_token)}`,
     `ad:${redact(cfg.ad_key)}`,
-    `pm:${redact(cfg.pm_key)}:${cfg.pm_auth || "apikey"}`,
+    `pm:${redact(cfg.pm_key)}:${pmAuth}`,
     `tb:${redact(cfg.tb_token)}`,
-    `dl:${redact(cfg.dl_key)}:${cfg.dl_auth || "Bearer"}:${cfg.dl_endpoint || ""}`,
-    `demo:${cfg.demo_mode || "off"}`
+    `dl:${redact(cfg.dl_key)}:${dlAuth}:${cfg.dl_endpoint || ""}`,
+    `demo:${demoProfile}`
   ].join("|");
 
   let results = getCache(cacheKey);
   if (!results) {
     try {
-      if ((cfg.demo_mode || "off") !== "off") {
-        results = demoResults(cfg.demo_mode);
+      if (demoProfile !== "off") {
+        results = demoResults(demoProfile);
       } else {
         const jobs = [];
         if (enabled.includes("realdebrid")) jobs.push(pRealDebrid({ token: (cfg.rd_token || "").trim() }));
         if (enabled.includes("alldebrid"))  jobs.push(pAllDebrid({ key: (cfg.ad_key || "").trim() }));
-        if (enabled.includes("premiumize")) jobs.push(pPremiumize({ key: (cfg.pm_key || "").trim(), useOAuth: (cfg.pm_auth || "apikey") === "oauth" }));
+        if (enabled.includes("premiumize")) jobs.push(
+          pPremiumize({ key: (cfg.pm_key || "").trim(), useOAuth: pmAuth === "oauth" })
+        );
         if (enabled.includes("torbox"))     jobs.push(pTorBox({ token: (cfg.tb_token || "").trim() }));
-        if (enabled.includes("debridlink")) jobs.push(pDebridLink({
-          key: (cfg.dl_key || "").trim(),
-          authScheme: (cfg.dl_auth || "Bearer"),
-          endpoint: (cfg.dl_endpoint || "https://debrid-link.com/api/account/infos").trim()
-        }));
+        if (enabled.includes("debridlink")) jobs.push(
+          pDebridLink({
+            key: (cfg.dl_key || "").trim(),
+            authScheme: dlAuth,
+            endpoint: (cfg.dl_endpoint || "https://debrid-link.com/api/account/infos").trim()
+          })
+        );
         results = jobs.length ? await Promise.all(jobs) : [];
       }
       setCache(cacheKey, results, cacheMin * MIN);
@@ -508,10 +553,8 @@ builder.defineStreamHandler(async (args) => {
     }
   }
 
-  // Build one stream per provider to respect 8-line limit per card
   const streams = [];
   for (const r of results) {
-    // If provider returned null (e.g., missing token), show a small notice card
     if (r.premium === null && !r.username && !r.daysLeft && !r.untilISO && !r.note) continue;
 
     const card = renderProviderCard(r);
@@ -524,7 +567,6 @@ builder.defineStreamHandler(async (args) => {
     });
   }
 
-  // If none, still show a default card
   if (streams.length === 0) {
     streams.push({
       name: "🔐 Statusio",
