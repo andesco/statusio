@@ -3,11 +3,11 @@
 // Providers: Real-Debrid, AllDebrid, Premiumize, TorBox, Debrid-Link
 // Features: Config UI, per-provider tokens, demo mode, caching, logo in manifest
 //
-// ⚠️ Node/ESM note:
-//   - Use Node 18+ and set { "type": "module" } in package.json
-//   - Install deps:  npm i stremio-addon-sdk node-fetch
-//   - Run:           RD_TOKEN=xxxx npm start  (or: node index.js)
-//   - Addon URL:     http://127.0.0.1:7042/manifest.json
+// Node setup:
+//   - package.json: { "type": "module", "scripts": { "start": "node index.js" } }
+//   - npm i stremio-addon-sdk node-fetch
+//   - Run locally:  set RD_TOKEN=XXXX && npm start
+//   - Manifest URL: http://127.0.0.1:7042/manifest.json
 // ============================================================================
 
 import sdk from "stremio-addon-sdk";
@@ -64,15 +64,16 @@ const getCache = (key) => {
 };
 
 // ----------------------------- Quotes --------------------------------------
+
 // 14+ days (OK)
 const QUOTES_OK = [
-  // Work-while-watching (5)
+  // work / productivity vibes
   "Grind & binge",
   "Work n' watch",
   "Work hard, play harder",
   "All in one",
   "Watch it all",
-  // Short zingers (10 micro)
+  // micro one-liners
   "Plot twist: me",
   "Popcorn is needed",
   "Sequel my life",
@@ -98,6 +99,19 @@ const QUOTES_OK = [
   "Therapy, but with dragons.",
   "Stretch, sip, stream.",
   "Zoom out, zone in.",
+  "One more can't hurt... right?",
+  "Am I doomscrolling on TV?",
+  "I wanna know what happened next...",
+  "Just one season.",
+  "Sleep is overrated.",
+  "Cliffhanger got me.",
+  "I can quit… later.",
+  "This is self-care.",
+  "Oops, next ep started.",
+  "Brain: just one more.",
+  "Plot > responsibilities.",
+  "We roll credits at 3AM.",
+  "I live here now.",
   "Let the credits roll."
 ];
 
@@ -148,64 +162,14 @@ const QUOTES_EXPIRED = [
   "Fix the sub, then binge.",
   "Snack break until renew.",
   "Epic… after renewal.",
-  "Re-subscribe to continue.",
+  "Re-subscribe to continue."
 ];
 
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-// ---------------------- Config label → internal mappings -------------------
-const PROVIDERS = [
-  { id: "realdebrid", label: "Real-Debrid" },
-  { id: "alldebrid",  label: "AllDebrid" },
-  { id: "premiumize", label: "Premiumize" },
-  { id: "torbox",     label: "TorBox" },
-  { id: "debridlink", label: "Debrid-Link" },
-];
-
-const PM_AUTH_OPTIONS = [
-  { id: "apikey", label: "apikey (query)" },
-  { id: "oauth",  label: "access_token (OAuth query)" }
-];
-
-const DL_AUTH_OPTIONS = [
-  { id: "Bearer", label: "Authorization: Bearer <token>" },
-  { id: "query",  label: "?apikey=<token>" }
-];
-
-const DEMO_MODE_OPTIONS = [
-  { id: "off",        label: "Off" },
-  { id: "all_active", label: "Simulate all active" },
-  { id: "some_off",   label: "Simulate some inactive" }
-];
-
-function mapLabelsToProviderIds(selectedLabels) {
-  const labels = Array.isArray(selectedLabels) ? selectedLabels : [];
-  const ids = [];
-  for (const lbl of labels) {
-    const match = PROVIDERS.find((p) => p.label === lbl);
-    if (match) ids.push(match.id);
-  }
-  return ids;
-}
-
-function resolvePmAuth(label) {
-  const found = PM_AUTH_OPTIONS.find((o) => o.label === label);
-  return found ? found.id : "apikey";
-}
-
-function resolveDlAuth(label) {
-  const found = DL_AUTH_OPTIONS.find((o) => o.label === label);
-  return found ? found.id : "Bearer";
-}
-
-function resolveDemoMode(label) {
-  const found = DEMO_MODE_OPTIONS.find((o) => o.label === label);
-  return found ? found.id : "off";
-}
-
 // --------------------------- Providers -------------------------------------
 // Each returns:
-// { name, premium: true|false|null, daysLeft: number|null, untilISO: string|null, username?: string, note?: string }
+// { name, premium: true|false|null, daysLeft, untilISO, username?: string, note?: string }
 
 async function pRealDebrid({ token, fetchImpl = fetch }) {
   const name = "Real-Debrid";
@@ -223,7 +187,7 @@ async function pRealDebrid({ token, fetchImpl = fetch }) {
 
     if (j.expiration) {
       const expNum = Number(j.expiration);
-      if (Number.isFinite(expNum) && expNum > 1000000000) {
+      if (Number.isFinite(expNum) && expNum > 1_000_000_000) {
         const out = daysLeftFromEpochSec(expNum);
         days = out.days; untilISO = out.untilISO;
       } else {
@@ -347,8 +311,8 @@ async function pDebridLink({ key, authScheme = "Bearer", endpoint = "https://deb
 
     const secs = Number(j.value.premiumLeft || 0);
     const out = secs > 0 ? daysLeftFromDurationSec(secs) : { days: 0, untilISO: null };
-
     const username = j?.value?.username || null;
+
     if (out.days > 0) return { name, premium: true, daysLeft: out.days, untilISO: out.untilISO, username };
     return { name, premium: false, daysLeft: 0, untilISO: null, username, note: `accountType=${j.value.accountType ?? "?"}` };
   } catch (e) {
@@ -387,11 +351,15 @@ function statusInfo(days) {
 // One card per provider, max 8 lines including separators
 function renderProviderCard(r) {
   const service = r.name;
-  const user = r?.username ? `${String(r.username)}` : "—";
-  const days = Number.isFinite(r.daysLeft) && r.daysLeft !== null ? r.daysLeft : (r.premium ? "—" : 0);
+  const user = r?.username ? `@${String(r.username)}` : "—";
+  const days =
+    Number.isFinite(r.daysLeft) && r.daysLeft !== null
+      ? r.daysLeft
+      : (r.premium ? "—" : 0);
   const dateStr = r.untilISO ? isoDate(r.untilISO) : (r.premium ? "—" : "N/A");
 
-  const { mark, bucket } = statusInfo(Number(days === "—" ? 9999 : days));
+  const numericDays = typeof days === "number" ? days : 9999;
+  const { mark, bucket } = statusInfo(numericDays);
   const quote = pick(bucket);
 
   let titlePrefix = "🟢 OK";
@@ -404,7 +372,7 @@ function renderProviderCard(r) {
   const lines = [
     "———————————————",
     `🤝 Service: ${service}`,
-    `👤 @${user}`,
+    `👤 ${user}`,
     `⭐ Premium until: ${dateStr}`,
     `⏳ Days remaining: ${days} D`,
     `${mark}`,
@@ -418,7 +386,7 @@ function renderProviderCard(r) {
 // --------------------------- Manifest & Config ------------------------------
 const manifest = {
   id: "a1337user.statusio.multi",
-  version: "1.0.5",
+  version: "1.0.6",
   name: "Statusio",
   description: "Shows premium status & days remaining across multiple debrid providers.",
   resources: ["stream"],
@@ -431,8 +399,15 @@ const manifest = {
       name: "providers_enabled",
       type: "select",
       title: "Which debrid services do you use?",
-      options: PROVIDERS.map((p) => p.label),
-      multiple: true,
+      options: [
+        { value: "realdebrid", name: "Real-Debrid" },
+        { value: "alldebrid",  name: "AllDebrid" },
+        { value: "premiumize", name: "Premiumize" },
+        { value: "torbox",     name: "TorBox" },
+        { value: "debridlink", name: "Debrid-Link" },
+      ],
+      // single select (Stremio shows dropdown)
+      multiple: false,
       required: false
     },
     { name: "cache_minutes", type: "number", default: 45, title: "Cache Minutes (default 45)" },
@@ -445,19 +420,23 @@ const manifest = {
       name: "pm_auth",
       type: "select",
       title: "Premiumize Auth",
-      options: PM_AUTH_OPTIONS.map((o) => o.label),
-      default: "apikey (query)"
+      options: [
+        { value: "apikey", name: "apikey (query)" },
+        { value: "oauth",  name: "access_token (OAuth query)" }
+      ],
+      default: "apikey"
     },
     { name: "tb_token", type: "text", title: "TorBox Token (Bearer)" },
-    {
-      name: "dl_key", type: "text", title: "Debrid-Link API Key/Token"
-    },
+    { name: "dl_key",  type: "text", title: "Debrid-Link API Key/Token" },
     {
       name: "dl_auth",
       type: "select",
       title: "Debrid-Link Auth Scheme",
-      options: DL_AUTH_OPTIONS.map((o) => o.label),
-      default: "Authorization: Bearer <token>"
+      options: [
+        { value: "Bearer", name: "Authorization: Bearer <token>" },
+        { value: "query",  name: "?apikey=<token>" }
+      ],
+      default: "Bearer"
     },
     {
       name: "dl_endpoint",
@@ -465,14 +444,16 @@ const manifest = {
       title: "Debrid-Link Endpoint Override",
       default: "https://debrid-link.com/api/account/infos"
     },
-
-    // Demo mode
     {
       name: "demo_mode",
       type: "select",
       title: "Demo Mode (simulate without real tokens)",
-      options: DEMO_MODE_OPTIONS.map((o) => o.label),
-      default: "Off"
+      options: [
+        { value: "off",        name: "Off" },
+        { value: "all_active", name: "Simulate all active" },
+        { value: "some_off",   name: "Simulate some inactive" }
+      ],
+      default: "off"
     }
   ]
 };
@@ -483,53 +464,54 @@ const builder = new addonBuilder(manifest);
 builder.defineStreamHandler(async (args) => {
   const cfg = args?.config || {};
 
-  // ENV fallback (lets you run with only RD token from CMD)
+  // ENV fallback (local testing with RD_TOKEN)
   if (!cfg.rd_token && process.env.RD_TOKEN) {
     cfg.rd_token = process.env.RD_TOKEN;
-    if (!Array.isArray(cfg.providers_enabled) || cfg.providers_enabled.length === 0) {
-      cfg.providers_enabled = ["Real-Debrid"];
-    }
+    if (!cfg.providers_enabled) cfg.providers_enabled = "realdebrid";
   }
 
-  // Turn labels from UI into internal IDs
-  const enabled = mapLabelsToProviderIds(cfg.providers_enabled || []);
-  const pmAuth = resolvePmAuth(cfg.pm_auth);
-  const dlAuth = resolveDlAuth(cfg.dl_auth);
-  const demoProfile = resolveDemoMode(cfg.demo_mode);
+  const cacheMin = Number.isFinite(cfg.cache_minutes) ? Math.max(1, cfg.cache_minutes) : 45;
 
-  const cacheMinVal = parseInt(cfg.cache_minutes, 10);
-  const cacheMin = Number.isFinite(cacheMinVal) ? Math.max(1, cacheMinVal) : 45;
+  // NEW: support string OR array for providers_enabled
+  const rawProviders = cfg.providers_enabled;
+  let enabled;
+  if (Array.isArray(rawProviders)) {
+    enabled = rawProviders.map((v) => String(v).toLowerCase());
+  } else if (rawProviders) {
+    enabled = [String(rawProviders).toLowerCase()];
+  } else {
+    enabled = [];
+  }
 
   const cacheKey = [
     enabled.join(","),
     `rd:${redact(cfg.rd_token)}`,
     `ad:${redact(cfg.ad_key)}`,
-    `pm:${redact(cfg.pm_key)}:${pmAuth}`,
+    `pm:${redact(cfg.pm_key)}:${cfg.pm_auth || "apikey"}`,
     `tb:${redact(cfg.tb_token)}`,
-    `dl:${redact(cfg.dl_key)}:${dlAuth}:${cfg.dl_endpoint || ""}`,
-    `demo:${demoProfile}`
+    `dl:${redact(cfg.dl_key)}:${cfg.dl_auth || "Bearer"}:${cfg.dl_endpoint || ""}`,
+    `demo:${cfg.demo_mode || "off"}`
   ].join("|");
 
   let results = getCache(cacheKey);
   if (!results) {
     try {
-      if (demoProfile !== "off") {
-        results = demoResults(demoProfile);
+      if ((cfg.demo_mode || "off") !== "off") {
+        results = demoResults(cfg.demo_mode);
       } else {
         const jobs = [];
         if (enabled.includes("realdebrid")) jobs.push(pRealDebrid({ token: (cfg.rd_token || "").trim() }));
         if (enabled.includes("alldebrid"))  jobs.push(pAllDebrid({ key: (cfg.ad_key || "").trim() }));
-        if (enabled.includes("premiumize")) jobs.push(
-          pPremiumize({ key: (cfg.pm_key || "").trim(), useOAuth: pmAuth === "oauth" })
-        );
+        if (enabled.includes("premiumize")) jobs.push(pPremiumize({
+          key: (cfg.pm_key || "").trim(),
+          useOAuth: (cfg.pm_auth || "apikey") === "oauth"
+        }));
         if (enabled.includes("torbox"))     jobs.push(pTorBox({ token: (cfg.tb_token || "").trim() }));
-        if (enabled.includes("debridlink")) jobs.push(
-          pDebridLink({
-            key: (cfg.dl_key || "").trim(),
-            authScheme: dlAuth,
-            endpoint: (cfg.dl_endpoint || "https://debrid-link.com/api/account/infos").trim()
-          })
-        );
+        if (enabled.includes("debridlink")) jobs.push(pDebridLink({
+          key: (cfg.dl_key || "").trim(),
+          authScheme: (cfg.dl_auth || "Bearer"),
+          endpoint: (cfg.dl_endpoint || "https://debrid-link.com/api/account/infos").trim()
+        }));
         results = jobs.length ? await Promise.all(jobs) : [];
       }
       setCache(cacheKey, results, cacheMin * MIN);
@@ -538,7 +520,7 @@ builder.defineStreamHandler(async (args) => {
         "———————————————",
         "⚠️ Unable to fetch debrid status",
         String(e.message || e),
-        "———————————————",
+        "———————————————"
       ].join("\n");
       return {
         streams: [{
@@ -546,7 +528,7 @@ builder.defineStreamHandler(async (args) => {
           title: "⚠️ Status unavailable",
           description: lines,
           behaviorHints: { notWebReady: true },
-          externalUrl: "about:blank",
+          externalUrl: "about:blank"
         }],
         cacheMaxAge: 60
       };
@@ -555,8 +537,6 @@ builder.defineStreamHandler(async (args) => {
 
   const streams = [];
   for (const r of results) {
-    if (r.premium === null && !r.username && !r.daysLeft && !r.untilISO && !r.note) continue;
-
     const card = renderProviderCard(r);
     streams.push({
       name: "🔐 Statusio",
@@ -570,7 +550,7 @@ builder.defineStreamHandler(async (args) => {
   if (streams.length === 0) {
     streams.push({
       name: "🔐 Statusio",
-      title: "⚠️ No providers configured",
+      title: "⚠️ Add a token in Configure",
       description: [
         "———————————————",
         "Add a token in Configure:",
