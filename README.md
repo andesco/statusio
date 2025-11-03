@@ -1,4 +1,6 @@
-# Statusio — Debrid Account Status
+<p align="center">
+  <img src="assets/logo.png" width="180" alt="Statusio logo">
+</p> # Statusio — Debrid Account Status
 ### *A **Self-Hosted** Stremio Add-on*
 *Developed by **A1337User***  
 
