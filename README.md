@@ -5,12 +5,12 @@
 ---
 
 # Statusio — Debrid Account Status
-### *A **Self-Hosted** Stremio Add-on*
+### *A **Debrid-Based** Stremio Add-on*
 *Developed by **A1337User***  
 
-A tiny, self-hosted Stremio add-on that shows your **premium status & days remaining** for multiple debrid providers as a single **info card** in the **Streams** tab.
+A tiny, Stremio add-on that shows your **premium status & days remaining** for *multiple debrid providers* as a single **info card** in the **Streams** tab.
 
-**Note:** *Statusio* will run on a server soon, stay tuned.
+**Note:** *Statusio* is also hosted on **ElfHosted** located *![here](https://statusio.elfhosted.com/configure)*.
 
 ---
 
@@ -69,6 +69,47 @@ It runs locally—**no remote server required**.
 - **Demo Mode** (*all_active* / *some_off*) to preview without tokens
 - **Small in-memory cache** to avoid API spam
 - **Compact 6–8 line display** with friendly quotes and renewal nudges
+
+
+## Self-hosting 
+**Statusio** is designed to be *self-hosted* as well — you run the add-on yourself, and Stremio connects *directly to your server*.
+
+There are two *common* ways to host it:
+*Local / personal machine* (dev & testing)
+
+Clone this repo to your PC.
+
+Install dependencies in the project folder:
+```cmd
+npm install
+```
+
+Start the server:
+```cmd
+node index.js
+```
+
+Use the manifest URL shown in the console (e.g. ```cmdhttp://127.0.0.1:7042/manifest.json```) to install the add-on in Stremio.
+
+Home server / VPS (for all your devices)
+
+**Clone the repo** onto your *server* (*Unraid, Proxmox, VPS,* etc.).
+
+Install **Node.js** and run:
+```cmd
+npm install
+node index.js
+```
+
+Expose the chosen port (default **7042**) on your network or via reverse proxy.
+
+In Stremio (Desktop / Web / Android TV), install the add-on using your server’s URL, e.g.:
+
+http://your-server-ip-or-domain:7042/manifest.json
+
+
+[!NOTE]
+Your tokens never leave your server — Stremio talks directly to your self-hosted Statusio instance. If you expose it to the internet, treat the URL as sensitive and consider using HTTPS and network-level protections.
 
 ---
 
@@ -292,6 +333,10 @@ http://127.0.0.1:7010/manifest.json
 - Developed by **A1337User**
 
 - Built with **stremio-addon-sdk** and **node-fetch**
+
+- Config-flow insight & guidance [**dumpemout**](https://github.com/dumpemout)
+  
+- Hosting provided by [**ElfHosted**](https://github.com/elfhosted)
 
 
 
