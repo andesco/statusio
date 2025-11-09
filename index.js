@@ -15,8 +15,9 @@ const { addonBuilder, serveHTTP } = sdk;
 import fetch from "node-fetch";
 
 // ----------------------------- Icon ----------------------------------------
-// Use hosted GitHub raw logo (requested)
-const LOGO_URL = "https://raw.githubusercontent.com/ARandomAddonDev/Statusio/refs/heads/main/assets/logo.png";
+// v1.1.12 – use hosted logo URL (no base64 embedding)
+const LOGO_URL =
+  "https://raw.githubusercontent.com/ARandomAddonDev/Statusio/refs/heads/main/assets/logo.png";
 
 // ----------------------------- Helpers -------------------------------------
 const MIN = 60 * 1000;
@@ -661,7 +662,8 @@ function renderProviderCard(r) {
 
 // --------------------------- External URL Builder ---------------------------
 // Build externalUrl per provider; if missing, pick the first present by priority.
-// Falls back to hosted status page, then about:blank.
+// We *use it only as our stream.url* in v1.1.12 (no externalUrl field) so TV
+// clients only see a single URL field.
 function buildExternalUrl(result, tokens) {
   try {
     // If we know the provider, use its homepage
@@ -678,7 +680,7 @@ function buildExternalUrl(result, tokens) {
         (prov === "AllDebrid" && tokens.ad) ||
         (prov === "Debrid-Link" && tokens.dl)
       ) {
-        return PROVIDER_URL[prov] || "about:blank";
+        return PROVIDER_URL[prov] || STATUS_BASE_URL;
       }
     }
 
@@ -696,15 +698,15 @@ function buildExternalUrl(result, tokens) {
     return base.toString();
   } catch (e) {
     console.warn("[Statusio] Failed to build externalUrl:", e.message);
-    return "about:blank";
+    return STATUS_BASE_URL;
   }
 }
 
 // --------------------------- Manifest & Config ------------------------------
-// v1.1.11 — switch logo to GitHub raw URL; no stream.type (for stricter clients), url+externalUrl
+// v1.1.12 — experiment: only `url` (no externalUrl) + no notWebReady
 const manifest = {
   id: "a1337user.statusio.multi.simple",
-  version: "1.1.11",
+  version: "1.1.12",
   name: "Statusio",
   description:
     "Shows premium status & days remaining across multiple debrid providers.",
@@ -868,9 +870,7 @@ builder.defineStreamHandler(async (args) => {
             title: "⚠️ Status unavailable",
             description: lines,
             url: fallbackLink,
-            externalUrl: fallbackLink,
             behaviorHints: {
-              notWebReady: true,
               bingeGroup: "statusio-info"
             }
           }
@@ -890,9 +890,7 @@ builder.defineStreamHandler(async (args) => {
       title: card.title,
       description: card.description,
       url: link,
-      externalUrl: link,
       behaviorHints: {
-        notWebReady: true,
         bingeGroup: "statusio-info"
       }
     });
@@ -917,9 +915,7 @@ builder.defineStreamHandler(async (args) => {
           LINE
         ].join("\n"),
         url: fallbackLink,
-        externalUrl: fallbackLink,
         behaviorHints: {
-          notWebReady: true,
           bingeGroup: "statusio-info"
         }
       });
@@ -941,9 +937,7 @@ builder.defineStreamHandler(async (args) => {
           LINE
         ].join("\n"),
         url: fallbackLink,
-        externalUrl: fallbackLink,
         behaviorHints: {
-          notWebReady: true,
           bingeGroup: "statusio-info"
         }
       });
