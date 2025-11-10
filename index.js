@@ -1,10 +1,6 @@
 // ============================================================================
-// Statusio • Stremio Add-on (TV-Compatible + light UX upgrade)
-// Based on proven Ratings Aggregator pattern that works on Android TV/tvOS
-// - Single stream only
-// - Simple line-break text
-// - url + externalUrl + notWebReady
-// - No setup/instruction streams (empty array instead)
+// Statusio • Stremio Add-on (TV-Compatible Baseline v1.1.17)
+// EXACTLY matches the proven Ratings Aggregator–style pattern for TVs
 // ============================================================================
 
 import sdk from "stremio-addon-sdk";
@@ -12,7 +8,8 @@ const { addonBuilder, serveHTTP } = sdk;
 import fetch from "node-fetch";
 
 // ----------------------------- Icon ----------------------------------------
-const LOGO_URL = "https://raw.githubusercontent.com/ARandomAddonDev/Statusio/refs/heads/main/assets/logo.png";
+const LOGO_URL =
+  "https://raw.githubusercontent.com/ARandomAddonDev/Statusio/refs/heads/main/assets/logo.png";
 
 // ----------------------------- Helpers -------------------------------------
 const MIN = 60 * 1000;
@@ -71,10 +68,7 @@ async function pRealDebrid({ token, fetchImpl = fetch }) {
 
   try {
     const res = await fetchImpl("https://api.real-debrid.com/rest/1.0/user", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "User-Agent": "Statusio/1.0",
-      },
+      headers: { Authorization: `Bearer ${token}`, "User-Agent": "Statusio/1.0" },
     });
 
     if (!res.ok)
@@ -90,8 +84,7 @@ async function pRealDebrid({ token, fetchImpl = fetch }) {
     const j = await res.json();
     const username = j?.username || j?.user || null;
     const premium =
-      j.premium === true ||
-      String(j.type || "").toLowerCase() === "premium";
+      j.premium === true || String(j.type || "").toLowerCase() === "premium";
     let untilISO = null,
       days = null;
 
@@ -196,10 +189,7 @@ async function pAllDebrid({ key, fetchImpl = fetch }) {
     const isPrem = !!u.isPremium;
     let out = { days: null, untilISO: null };
 
-    if (
-      Number.isFinite(Number(u.premiumUntil)) &&
-      Number(u.premiumUntil) > 0
-    ) {
+    if (Number.isFinite(Number(u.premiumUntil)) && Number(u.premiumUntil) > 0) {
       out = daysLeftFromEpochSec(Number(u.premiumUntil));
     }
 
@@ -306,10 +296,7 @@ async function pTorBox({ token, fetchImpl = fetch }) {
     const res = await fetchImpl(
       "https://api.torbox.app/v1/api/user/me?settings=true",
       {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "User-Agent": "Statusio/1.0",
-        },
+        headers: { Authorization: `Bearer ${token}`, "User-Agent": "Statusio/1.0" },
       }
     );
 
@@ -333,11 +320,7 @@ async function pTorBox({ token, fetchImpl = fetch }) {
 
     if (u?.premiumUntil) {
       out = daysLeftFromEpochSec(u.premiumUntil);
-    } else if (
-      u?.premium_left ||
-      u?.premiumLeft ||
-      u?.remainingPremiumSeconds
-    ) {
+    } else if (u?.premium_left || u?.premiumLeft || u?.remainingPremiumSeconds) {
       out = daysLeftFromDurationSec(
         u.premium_left || u.premiumLeft || u.remainingPremiumSeconds
       );
@@ -473,7 +456,7 @@ function getStatusInfo(days) {
   return { emoji: "🟢", status: "OK" };
 }
 
-// Simple provider line, like Ratings Aggregator
+// SIMPLE text like Ratings Aggregator
 function formatProviderStatus(r) {
   const user = r?.username ? `@${String(r.username)}` : "—";
   const days =
@@ -487,20 +470,23 @@ function formatProviderStatus(r) {
   const numericDays = typeof days === "number" ? days : 9999;
   const { emoji, status } = getStatusInfo(numericDays);
 
-  return `${emoji} ${r.name}: ${status}\nUser: ${user}\nExpires: ${dateStr}\nDays left: ${days}${
-    r.note ? `\nNote: ${r.note}` : ""
-  }`;
+  return (
+    `${emoji} ${r.name}: ${status}\n` +
+    `User: ${user}\n` +
+    `Expires: ${dateStr}\n` +
+    `Days left: ${days}` +
+    (r.note ? `\nNote: ${r.note}` : "")
+  );
 }
 
-// --------------------------- Manifest (TV-Compatible) ---------------------
+// --------------------------- Manifest (TV-Compatible) ----------------------
 const manifest = {
   id: "a1337user.statusio.tv.compatible",
-  version: "1.1.16",
+  version: "1.1.17",
   name: "Statusio",
   description:
     "Shows premium status & days remaining across multiple debrid providers.",
-
-  // EXACTLY like Ratings Aggregator base pattern
+  // EXACTLY like Ratings Aggregator
   resources: ["stream"],
   types: ["movie", "series"],
   idPrefixes: ["tt"],
@@ -520,11 +506,7 @@ const manifest = {
     },
     { key: "rd_token", type: "text", title: "Real-Debrid Token (Bearer)" },
     { key: "ad_key", type: "text", title: "AllDebrid API Key (Bearer)" },
-    {
-      key: "pm_key",
-      type: "text",
-      title: "Premiumize apikey OR access_token",
-    },
+    { key: "pm_key", type: "text", title: "Premiumize apikey OR access_token" },
     { key: "tb_token", type: "text", title: "TorBox Token (Bearer)" },
     { key: "dl_key", type: "text", title: "Debrid-Link API Key/Token" },
     {
@@ -575,9 +557,7 @@ async function fetchStatusData(cfg) {
     `ad:${redact(tokens.ad)}`,
     `pm:${redact(tokens.pm)}`,
     `tb:${redact(tokens.tb)}`,
-    `dl:${redact(tokens.dl)}:${cfg.dl_auth || "Bearer"}:${
-      cfg.dl_endpoint || ""
-    }`,
+    `dl:${redact(tokens.dl)}:${cfg.dl_auth || "Bearer"}:${cfg.dl_endpoint || ""}`,
   ].join("|");
 
   let results = getCache(cacheKey);
@@ -594,8 +574,8 @@ async function fetchStatusData(cfg) {
           pDebridLink({
             key: tokens.dl,
             authScheme: cfg.dl_auth || "Bearer",
-            endpoint:
-              (cfg.dl_endpoint || "https://debrid-link.com/api/account/infos").trim(),
+            endpoint: (cfg.dl_endpoint ||
+              "https://debrid-link.com/api/account/infos").trim(),
           })
         );
 
@@ -607,19 +587,19 @@ async function fetchStatusData(cfg) {
     }
   }
 
-  const hasData = results.some(
-    (r) => r && (r.premium !== null || r.username)
-  );
-
-  return { results, enabled, hasData };
+  return {
+    results,
+    enabled,
+    hasData: results.some((r) => r.premium !== null || r.username),
+  };
 }
 
-// ---------------------------- Stream Handler (TV-Compatible) ---------------
+// ---------------------------- Stream Handler (TV) --------------------------
 builder.defineStreamHandler(async (args) => {
   const reqType = String(args?.type || "");
   const reqId = String(args?.id || "");
 
-  console.log("[Statusio] TV stream request:", { type: reqType, id: reqId });
+  console.log("[Statusio v1.1.17] TV stream request:", { type: reqType, id: reqId });
 
   if (!reqId || !reqId.startsWith("tt")) {
     return { streams: [] };
@@ -638,79 +618,50 @@ builder.defineStreamHandler(async (args) => {
     cfg = rawCfg;
   }
 
-  console.log("[Statusio parsed config]", JSON.stringify(cfg, null, 2));
+  console.log("[Statusio v1.1.17 parsed config]", JSON.stringify(cfg, null, 2));
 
   const statusData = await fetchStatusData(cfg);
 
-  // If no providers are enabled, or no data, return empty for TV
+  // If no providers configured, return empty (TVs skip setup/instructional stuff)
   if (!Object.values(statusData.enabled).some((v) => v)) {
-    console.log("[Statusio] No providers enabled, returning empty for TV");
+    console.log("[Statusio v1.1.17] No providers enabled, returning empty for TV");
     return { streams: [] };
   }
 
-  if (!statusData.hasData) {
-    console.log("[Statusio] Providers enabled but no data, returning empty");
-    return { streams: [] };
+  const streams = [];
+
+  // Create TV-compatible streams - SIMPLE like Ratings Aggregator
+  if (statusData.hasData) {
+    for (const r of statusData.results) {
+      if (r.premium !== null || r.username) {
+        streams.push({
+          name: "🔐 Statusio", // Fixed name like "🎯 Ratings Aggregator"
+          description: formatProviderStatus(r),
+          // CRITICAL: include url + externalUrl
+          url: "https://real-debrid.com/",
+          externalUrl: "https://real-debrid.com/",
+          behaviorHints: {
+            notWebReady: true,
+          },
+        });
+      }
+    }
   }
 
-  const results = statusData.results.filter(
-    (r) => r && (r.premium !== null || r.username)
+  // If multiple providers, only return ONE stream to avoid TV issues
+  const finalStreams = streams.length > 0 ? [streams[0]] : [];
+
+  console.log(
+    `[Statusio v1.1.17] Returning ${finalStreams.length} TV-compatible streams`
   );
-
-  if (results.length === 0) {
-    console.log("[Statusio] No usable provider results, returning empty");
-    return { streams: [] };
-  }
-
-  // Choose a "main" provider for status / emoji (first with numeric daysLeft)
-  let main = results.find((r) => typeof r.daysLeft === "number");
-  if (!main) main = results[0];
-
-  const daysForMain =
-    typeof main.daysLeft === "number" ? main.daysLeft : 9999;
-  const { emoji, status } = getStatusInfo(daysForMain);
-
-  const providerCount = results.length;
-  const title = `${emoji} Statusio – ${status} (${providerCount} provider${
-    providerCount === 1 ? "" : "s"
-  })`;
-
-  const lines = [];
-  lines.push("Debrid status overview:");
-  lines.push("");
-
-  for (const r of results) {
-    lines.push(formatProviderStatus(r));
-    lines.push(""); // blank line between providers
-  }
-
-  const description = lines.join("\n");
-
-  // Keep URL pattern exactly like the working TV-safe version
-  const url = "https://real-debrid.com/";
-
-  const streams = [
-    {
-      name: "🔐 Statusio", // fixed name (like Ratings Aggregator)
-      title,               // new: dynamic but simple
-      description,
-      url,
-      externalUrl: url,
-      behaviorHints: {
-        notWebReady: true,
-      },
-    },
-  ];
-
-  console.log(`[Statusio] Returning ${streams.length} TV-compatible stream(s)`);
-
-  return { streams };
+  return { streams: finalStreams };
 });
 
 // ------------------------------ Server -------------------------------------
 const PORT = Number(process.env.PORT || 7042);
 serveHTTP(builder.getInterface(), { port: PORT, hostname: "0.0.0.0" });
 
-console.log(`✅ Statusio TV Compatible (v1.1.16) at http://127.0.0.1:${PORT}/manifest.json`);
-console.log(`📱 Uses Ratings Aggregator pattern + single-stream overview`);
-console.log(`🎯 Test on Android TV: open any movie/series and check streams`);
+console.log(
+  `✅ Statusio TV Baseline v1.1.17 at http://127.0.0.1:${PORT}/manifest.json`
+);
+console.log(`📱 Uses proven Ratings Aggregator TV pattern`);
