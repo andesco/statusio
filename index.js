@@ -1,6 +1,6 @@
 // ============================================================================
-// Statusio • Stremio Add-on (TV-Compatible v1.1.24)
-// Change: restore \n line breaks and show one card per enabled service (capped)
+// Statusio • Stremio Add-on (TV-Compatible v1.1.25)
+// Change: description = ONLY the per-field lines (no footer/thank-you/etc.)
 // Pattern: Ratings Aggregator–style (simple text, includes url + externalUrl)
 // ============================================================================
 
@@ -44,145 +44,38 @@ function daysLeftFromDurationSec(durationSec) {
 
 // 14+ days (OK) — Work mode, smart/funny, short zingers
 const QUOTES_OK = [
-  // Work-while-watching (5)
-  "Grind & binge",
-  "Work n' watch",
-  "Emails? Nah, episodes",
-  "Multitask: cry + work",
-  "Boss on mute, show on blast",
+// Work-while-watching (5)
+  "Grind & binge time!", "Work n' watch time!", "Emails? Nah, more episodes.", "Multitask: cry + work.", "Boss on mute, show on blast!",
 
-  // Short zingers (10 micro, <34 chars)
-  "Plot twist: me",
-  "Popcorn is needed",
-  "Sequel my life",
-  "Cue the chaos",
-  "Credits? Nope. Next.",
-  "Plot armor ON",
-  "Spoiler: snacks",
-  "Villain = bills",
-  "Dramatic sip",
-  "Boom. Plot.",
+// Short zingers (10 micro, <34 chars)
+  "Plot twist: me!", "Popcorn is needed!", "Sequel my life...", "Cue the chaos!", "Credits? Nope. Next.", "Spoiler: Need snacks.", "Villain = Bill time.", "*dramatic sip*", "Boom. Plot.",
 
-  // Smart/funny (15+ punchy bangers)
-  "You earned ‘Next Ep’.",
-  "Inbox zero, season one.",
-  "Adulting with captions.",
-  "Meetings end, movies start.",
-  "Procrastination: cinematic.",
-  "Budget: snacks approved.",
-  "Tonight’s plan: stay.",
-  "Your couch filed PTO.",
-  "Microwave time = trailer time.",
-  "Main quest: relax.",
-  "Side quest: popcorn.",
-  "Therapy, but with dragons.",
-  "Stretch, sip, stream.",
-  "Zoom out, zone in.",
-  "One more can't hurt... right?",
-  "Doomscrolling, but make it TV",
-  "I wanna know what happens next!",
-  "Just one season. *Lies.*",
-  "Sleep is overrated.",
-  "Cliffhanger got me hostage",
-  "I can quit… after this arc",
-  "This is self-care (delulu)",
-  "Oops, next ep autoplays",
-  "Brain: just one more. *12 later*",
-  "Plot > rent > everything",
-  "We roll credits at 3AM",
-  "I live here now. Send help.",
-  "Let the credits roll… never",
-  "My cardio: skipping intros",
-  "Hydrate? I drink plot twists",
-  "Laundry can wait. Drama can’t",
-  "Toilet break = high risk",
-  "Remote > friends > family",
-  "Eyes square, vibes rectangle",
-  "Binge now, adult later",
-  "Spoilers are a hate crime",
-  "Ctrl+Z real life, pls"
+// Smart/funny (15+ punchy bangers) — old school + new school + cringey gold
+  "You earned this binge, champ", "Queue = life. Season 1 GO", "Adulting? Nah, captioning", "Meetings done, MOVIE ON", "Procrastination level: PRO", "Budget says: snacks > rent", "Tonight: couch + 47 episodes", "Couch just filed for PTO", "Microwave = trailer timer", "Main quest: DO NOT DISTURB", "Side quest: find the remote", "Therapy? Nah, dragons", "Stretch. Sip. Stream. Repeat.", "Zoom call over, ZONE IN", "One more ep… *famous last words*", "Doomscrolling, but on TV", "I NEED to know what happens!", "Just one ep… *lies to mirror*", "Sleep? What’s that?", "Cliffhanger holding me hostage", "I can stop… after this season", "Self-care = 3AM binge", "Oops, autoplay betrayed me", "Brain: one more. Body: 12 later", "Plot > rent > my GPA", "Credits? We don’t do that here", "I now live in Couchville", "Let credits roll… IN HELL", "Skipping intros = cardio", "Hydrate? I drink DRAMA", "Laundry? Drama waits for NO ONE", "Toilet break = Russian roulette", "Remote > my ex > my mom", "Binge now, regret at sunrise", "Spoilers = war crime", "Ctrl+Z my entire life pls", "My plants died for this binge", "3AM me: still watching", "Eyebags = plot armor", "Blink = miss the plot", "Snaccident in progress", "Chores? What chores?", "Plot holes > life holes", "Remote stuck to my hand", "Next ep = my religion", "Buffering = life coach", "Subtitles = reading cheat", "Season finale? Pain.", "Autoplay = evil genius", "Blanket burrito mode", "My butt’s gone numb", "Snacks > stock market", "Pause? Never heard", "Plot twist: I’m broke", "Streaming > streaming IRL", "Eye strain = trophy", "Rewind = time travel", "Volume 47 = normal", "Binge coma incoming", "Tomorrow me hates today me", "WiFi > oxygen", "Episode 1? Rookie numbers", "Netflix & actually chill", "Loading… like my life", "Remote wars = real wars", "Popcorn lung = real", "Couch dent = legacy",
+
+// Genre-specific zingers (<34 chars) — old school + new school + cringey
+  "Horror: heart attack free", "Sci-fi: beam me up, couch", "Rom-com: love? Nah, binge", "Drama: tears > tissues", "Action: boom in my room", "Comedy: LOL till I choke", "Thriller: plot twist pants", "Fantasy: dragons > deadlines", "True crime: guilty pleasure", "Anime: subs > dubs fight", "Reality TV: messier than me", "Docu: facts? Mind blown", "Superhero: cape on couch", "Mystery: who done it? Me", "Historical: time travel cheap",
+
+// Post-binge regrets (<34 chars) — hilarious + cringey
+  "What day is it again?", "Eyes: send help pls", "Sunlight? What's that?", "Productive? Never was", "Butt numb, soul empty", "Regret level: max", "Tomorrow me: furious", "Plants dead, me alive?", "Social life? Canceled", "Binge hangover hits", "Mirror: who are you?", "Chores piled like eps", "Wallet: snacks broke me", "Brain rot achieved", "Neck pain = trophy",
+
+// Tech glitch roasts (<34 chars) — edgy + funny
+  "Buffering… my life", "Ads: skip my existence", "WiFi ghosted me", "HD? More like huh?", "Autoplay? Evil overlord", "Error 404: fun not found", "Loading… forever alone", "Pixelated dreams", "Remote battery dead", "Stream lag = rage", "Subtitles glitchy mess", "App crash = my mood", "No signal? Apocalypse", "Update now? Hell no", "You're the Debrid Master"
 ];
 
 // 14 days or less (warning) — funny/edgy nudge
 const QUOTES_WARN = [
-  "Renew before cliffhanger.",
-  "Cheaper than snacks.",
-  "Tiny fee, huge chill.",
-  "Beat the ‘oops, expired’.",
-  "Your future self says thanks.",
-  "Renew now, binge later.",
-  "Don’t pause the fun.",
-  "Click. Renew. Continue.",
-  "Keep calm, renew on.",
-  "Roll credits on worry.",
-  "Pay up or plot twist: pain",
-  "Binge tax due, peasant",
-  "Wallet lighter, soul fuller",
-  "Renew or face the void",
-  "Card declined? Big sad",
-  "Couch demands tribute",
-  "Subscription > therapy",
-  "Click or cry at 99%",
-  "Renewal = plot armor",
-  "Don’t let the algorithm win"
+  "Renew before cliffhanger.", "Cheaper than snacks.", "Tiny fee, huge chill.", "Beat the ‘oops, expired’.", "Your future self says thanks.", "Renew now, binge later.", "Don’t pause the fun.", "Click. Renew. Continue.", "Keep calm, renew on.", "Roll credits on worry.", "Pay up or plot twist: pain", "Binge tax due, peasant", "Wallet lighter, soul fuller", "Renew or face the void", "Card declined? Big sad", "Couch demands tribute", "Subscription > therapy", "Click or cry at 99%", "Renewal = plot armor", "Don’t let the algorithm win"
 ];
 
 // 3 days or less (critical) — urgent but still funny
 const QUOTES_CRIT = [
-  "Boss fight: renewal.",
-  "Renew soon, it's coming!",
-  "Please renew soon...",
-  "Your time is almost up!",
-  "Don't let your ISP catch on",
-  "Two taps, all vibes.",
-  "Renew = peace unlocked.",
-  "Don’t lose the finale.",
-  "Almost out—top up.",
-  "3…2…renew.",
-  "Tiny bill, big joy.",
-  "Grab the lifeline.",
-  "Save the weekend.",
-  "Clock’s loud. Renew.",
-  "Last ep loading… or not",
-  "Buffering fate. Renew.",
-  "Do it or doomscroll life",
-  "Finale blocked. Pay up.",
-  "Renew or rage quit",
-  "Plot armor expiring"
+  "Boss fight: renewal.", "Renew soon, it's coming!", "Please renew soon...", "Your time is almost up!", "Don't let your ISP catch on", "Two taps, all vibes.", "Renew = peace unlocked.", "Don’t lose the finale.", "Almost out—top up.", "3…2…renew.", "Tiny bill, big joy.", "Grab the lifeline.", "Save the weekend.", "Clock’s loud. Renew.", "Last ep loading… or not", "Buffering fate. Renew.", "Do it or doomscroll life", "Finale blocked. Pay up.", "Renew or rage quit", "Plot armor expiring"
 ];
 
 // 0 or less (expired) — roast mode ON
 const QUOTES_EXPIRED = [
-  "Renew ASAP or else...",
-  "Your ISP will be mad!",
-  "Renew now to avoid ISP Warnings",
-  "Renew subscription to continue",
-  "Renew to avoid confrontation",
-  "Renew now to continue",
-  "We're not responsible, renew.",
-  "We pause respectfully.",
-  "Refill the fun meter.",
-  "Next ep awaits payment.",
-  "Fix the sub, then binge.",
-  "Snack break until renew.",
-  "Epic… after renewal.",
-  "Re-subscribe to continue.",
-  "Broke hours activated",
-  "Screen black, dreams too",
-  "Poor and plotless",
-  "Renew or rot in reality",
-  "Buffering… forever",
-  "Cliffhanger hell awaits",
-  "Wallet betrayed you",
-  "Free trial? Cute story",
-  "Back to real life, sucka",
-  "Binge blocked. L bozo",
-  "Paywall won. You lost.",
-  "Subscription graveyard",
-  "Bills > chills > skills",
-  "Restart life.exe failed",
-  "Touch grass (mandatory)",
-  "You had one job: renew"
+  "Renew ASAP or else...", "Your ISP will be mad!", "Renew now to avoid ISP Warnings", "Renew subscription to continue", "Renew to avoid confrontation", "Renew now to continue", "We're not responsible, renew.", "We pause respectfully.", "Refill the fun meter.", "Next ep awaits payment.", "Fix the sub, then binge.", "Snack break until renew.", "Epic… after renewal.", "Re-subscribe to continue.", "Broke hours activated", "Screen black, dreams too", "Poor and plotless", "Renew or rot in reality", "Buffering… forever", "Cliffhanger hell awaits", "Wallet betrayed you", "Free trial? Cute story", "Back to real life, sucka", "Binge blocked. L bozo", "Paywall won. You lost.", "Subscription graveyard", "Bills > chills > skills", "Restart life.exe failed", "Touch grass (mandatory)", "You had one job: renew"
 ];
 
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
@@ -351,6 +244,8 @@ function formatProviderStatusWithBreaks(r) {
   const dateStr = r.untilISO ? isoDate(r.untilISO) : (r.premium ? "—" : "N/A");
   const numericDays = typeof days === "number" ? days : 9999;
   const { emoji, label, quoteSet } = getStatusInfo(numericDays);
+
+  // ONLY the per-field lines, joined by \n — no trailing footer
   const lines = [];
   lines.push(`🤝 Service: ${r.name}`);
   lines.push(`👤 User: ${user}`);
@@ -358,13 +253,13 @@ function formatProviderStatusWithBreaks(r) {
   lines.push(`⏳️ Days left: ${days}`);
   lines.push(`${emoji} Status: ${label}`);
   lines.push(`💬 ${pick(quoteSet)}`);
-  return lines.join("\n"); // restore \n line breaks
+  return lines.join("\n");
 }
 
 // --------------------------- Manifest (TV-Compatible) ----------------------
 const manifest = {
   id: "a1337user.statusio.tv.compatible",
-  version: "1.1.24",
+  version: "1.1.25",
   name: "Statusio",
   description: "Shows premium status & days remaining across multiple debrid providers.",
   resources: ["stream"],
@@ -469,7 +364,7 @@ builder.defineStreamHandler(async (args) => {
       if (r.premium !== null || r.username) {
         streams.push({
           name: "🔐 Statusio",
-          description: formatProviderStatusWithBreaks(r), // <- restored \n formatting
+          description: formatProviderStatusWithBreaks(r), // ONLY lines, with \n
           url: "https://real-debrid.com/",
           externalUrl: "https://real-debrid.com/",
           behaviorHints: { notWebReady: true },
@@ -489,5 +384,5 @@ builder.defineStreamHandler(async (args) => {
 const PORT = Number(process.env.PORT || 7042);
 serveHTTP(builder.getInterface(), { port: PORT, hostname: "0.0.0.0" });
 
-console.log(`✅ Statusio TV v1.1.24 at http://127.0.0.1:${PORT}/manifest.json`);
-console.log(`↩️  Using \\n line breaks and per-service cards (capped).`);
+console.log(`✅ Statusio v1.1.25 at http://127.0.0.1:${PORT}/manifest.json`);
+console.log(`↩️  Description now STRICTLY the six lines (no footer).`);
