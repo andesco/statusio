@@ -4,7 +4,7 @@
 // ============================================================================
 
 import {
-  builder,
+  manifest,
   fetchStatusData,
   formatProviderStatusWithBreaks,
   getStatusInfo,
@@ -101,8 +101,7 @@ async function handleRequest(request, env) {
 
   // Route 1: /manifest.json
   if (routePath === "/manifest.json" || routePath === "/manifest") {
-    const addonInterface = builder.getInterface();
-    return new Response(JSON.stringify(addonInterface.manifest, null, 2), {
+    return new Response(JSON.stringify(manifest, null, 2), {
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",

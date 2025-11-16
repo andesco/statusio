@@ -3,9 +3,9 @@
   "version": "1.1.26",
   "description": "Statusio • Stremio Debrid Status Addon",
   "type": "module",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "node server.js",
     "secret": "node -e \"console.log('\\n🔐 Generated Secret:\\n'); console.log(require('crypto').randomBytes(32).toString('base64url')); console.log('\\n💡 Set in wrangler.toml [vars] or Cloudflare dashboard\\n')\"",
     "dev:worker": "wrangler dev",
     "deploy:worker": "wrangler deploy",
@@ -19,6 +19,6 @@
     "stremio-addon-sdk": "^1.5.0"
   },
   "devDependencies": {
-    "wrangler": "^3.0.0"
+    "wrangler": "^4.47.0"
   }
 }

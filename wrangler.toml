@@ -1,12 +1,13 @@
 name = "statusio"
 main = "worker.js"
-compatibility_date = "2024-01-01"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
 # account_id = "" # `wrangler.toml`: disabled & ""
 
 workers_dev = true
 
-[[kv_namespaces]]
-binding = "STATUSIO_CACHE"
+kv_namespaces = [ { binding = "STATUSIO_CACHE" } ]
+# Automatic Provisioning: developers.cloudflare.com/workers/wrangler/configuration/
 
 [vars]
 ACCESS_SECRET = "update-default-access-key"
