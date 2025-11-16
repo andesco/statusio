@@ -1,0 +1,17 @@
+name = "statusio"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+# account_id = "" # `wrangler.toml`: disabled & ""
+
+workers_dev = true
+
+[[kv_namespaces]]
+binding = "STATUSIO_CACHE"
+
+[vars]
+ACCESS_SECRET = "update-default-access-key"
+
+# [[routes]] # `wrangler.toml`: disabled & "statusio.example.com"
+# pattern = "statusio.example.com"
+# custom_domain = true
+

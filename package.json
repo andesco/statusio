@@ -5,10 +5,20 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "secret": "node -e \"console.log('\\n🔐 Generated Secret:\\n'); console.log(require('crypto').randomBytes(32).toString('base64url')); console.log('\\n💡 Set in wrangler.toml [vars] or Cloudflare dashboard\\n')\"",
+    "dev:worker": "wrangler dev",
+    "deploy:worker": "wrangler deploy",
+    "tail:worker": "wrangler tail",
+    "dev:workerlocal": "wrangler dev --config wrangler.local.toml",
+    "deploy:workerlocal": "wrangler deploy --config wrangler.local.toml",
+    "tail:workerlocal": "wrangler tail --config wrangler.local.toml"
   },
   "dependencies": {
     "node-fetch": "^3.3.2",
     "stremio-addon-sdk": "^1.5.0"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
   }
 }

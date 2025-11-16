@@ -6,7 +6,9 @@
 
 import sdk from "stremio-addon-sdk";
 const { addonBuilder, serveHTTP } = sdk;
-import fetch from "node-fetch";
+
+// Conditional fetch: use global fetch (Workers) or node-fetch (Node.js)
+const fetch = globalThis.fetch || (await import("node-fetch")).default;
 
 // ----------------------------- Icon ----------------------------------------
 const LOGO_URL =
@@ -17,9 +19,9 @@ const MIN = 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const ceilDays = (ms) => Math.max(0, Math.ceil(ms / DAY_MS));
-const redact = (tok) =>
+export const redact = (tok) =>
   tok ? `${String(tok).slice(0, 4)}…${String(tok).slice(-4)}` : "(none)";
-const isoDate = (iso) =>
+export const isoDate = (iso) =>
   iso ? new Date(iso).toISOString().slice(0, 10) : "N/A";
 
 function daysLeftFromEpochSec(epochSec) {
@@ -43,7 +45,7 @@ function daysLeftFromDurationSec(durationSec) {
 // ----------------------------- Quotes --------------------------------------
 
 // 14+ days (OK) — Work mode, smart/funny, short zingers
-const QUOTES_OK = [
+export const QUOTES_OK = [
 // Work-while-watching (5)
   "Grind & binge time!", "Work n' watch time!", "Emails? Nah, more episodes.", "Multitask: cry + work.", "Boss on mute, show on blast!",
 
@@ -64,21 +66,21 @@ const QUOTES_OK = [
 ];
 
 // 14 days or less (warning) — funny/edgy nudge
-const QUOTES_WARN = [
+export const QUOTES_WARN = [
   "Renew before cliffhanger.", "Cheaper than snacks.", "Tiny fee, huge chill.", "Beat the ‘oops, expired’.", "Your future self says thanks.", "Renew now, binge later.", "Don’t pause the fun.", "Click. Renew. Continue.", "Keep calm, renew on.", "Roll credits on worry.", "Pay up or plot twist: pain", "Binge tax due, peasant", "Wallet lighter, soul fuller", "Renew or face the void", "Card declined? Big sad", "Couch demands tribute", "Subscription > therapy", "Click or cry at 99%", "Renewal = plot armor", "Don’t let the algorithm win"
 ];
 
 // 3 days or less (critical) — urgent but still funny
-const QUOTES_CRIT = [
+export const QUOTES_CRIT = [
   "Boss fight: renewal.", "Renew soon, it's coming!", "Please renew soon...", "Your time is almost up!", "Don't let your ISP catch on", "Two taps, all vibes.", "Renew = peace unlocked.", "Don’t lose the finale.", "Almost out—top up.", "3…2…renew.", "Tiny bill, big joy.", "Grab the lifeline.", "Save the weekend.", "Clock’s loud. Renew.", "Last ep loading… or not", "Buffering fate. Renew.", "Do it or doomscroll life", "Finale blocked. Pay up.", "Renew or rage quit", "Plot armor expiring"
 ];
 
 // 0 or less (expired) — roast mode ON
-const QUOTES_EXPIRED = [
+export const QUOTES_EXPIRED = [
   "Renew ASAP or else...", "Your ISP will be mad!", "Renew now to avoid ISP Warnings", "Renew subscription to continue", "Renew to avoid confrontation", "Renew now to continue", "We're not responsible, renew.", "We pause respectfully.", "Refill the fun meter.", "Next ep awaits payment.", "Fix the sub, then binge.", "Snack break until renew.", "Epic… after renewal.", "Re-subscribe to continue.", "Broke hours activated", "Screen black, dreams too", "Poor and plotless", "Renew or rot in reality", "Buffering… forever", "Cliffhanger hell awaits", "Wallet betrayed you", "Free trial? Cute story", "Back to real life, sucka", "Binge blocked. L bozo", "Paywall won. You lost.", "Subscription graveyard", "Bills > chills > skills", "Restart life.exe failed", "Touch grass (mandatory)", "You had one job: renew"
 ];
 
-const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+export const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
 // Simple in-memory cache
 const cache = new Map();
@@ -95,7 +97,7 @@ const getCache = (key) => {
 };
 
 // --------------------------- Providers -------------------------------------
-async function pRealDebrid({ token, fetchImpl = fetch }) {
+export async function pRealDebrid({ token, fetchImpl = fetch }) {
   const name = "Real-Debrid";
   if (!token)
     return {
@@ -188,7 +190,7 @@ async function pRealDebrid({ token, fetchImpl = fetch }) {
   }
 }
 
-async function pAllDebrid({ key, fetchImpl = fetch }) {
+export async function pAllDebrid({ key, fetchImpl = fetch }) {
   const name = "AllDebrid";
   if (!key)
     return {
@@ -258,7 +260,7 @@ async function pAllDebrid({ key, fetchImpl = fetch }) {
   }
 }
 
-async function pPremiumize({ key, useOAuth = false, fetchImpl = fetch }) {
+export async function pPremiumize({ key, useOAuth = false, fetchImpl = fetch }) {
   const name = "Premiumize";
   if (!key)
     return {
@@ -326,7 +328,7 @@ async function pPremiumize({ key, useOAuth = false, fetchImpl = fetch }) {
 
 // TorBox — updated to match documented API shape:
 //   { success, error, detail, data: { is_subscribed, premium_expires_at, ... } }
-async function pTorBox({ token, fetchImpl = fetch }) {
+export async function pTorBox({ token, fetchImpl = fetch }) {
   const name = "TorBox";
   if (!token)
     return {
@@ -440,7 +442,7 @@ async function pTorBox({ token, fetchImpl = fetch }) {
   }
 }
 
-async function pDebridLink({
+export async function pDebridLink({
   key,
   authScheme = "Bearer",
   endpoint = "https://debrid-link.com/api/account/infos",
@@ -519,7 +521,7 @@ async function pDebridLink({
 }
 
 // --------------------------- Status Formatting -----------------------------
-function getStatusInfo(days) {
+export function getStatusInfo(days) {
   if (days <= 0)
     return { emoji: "🔴", label: "Expired", quoteSet: QUOTES_EXPIRED };
   if (days <= 3)
@@ -529,7 +531,7 @@ function getStatusInfo(days) {
   return { emoji: "🟢", label: "OK", quoteSet: QUOTES_OK };
 }
 
-function formatProviderStatusWithBreaks(r) {
+export function formatProviderStatusWithBreaks(r) {
   const user = r?.username ? `@${String(r.username)}` : "—";
   const days = Number.isFinite(r.daysLeft) && r.daysLeft !== null
     ? r.daysLeft
@@ -599,10 +601,10 @@ const manifest = {
   ],
 };
 
-const builder = new addonBuilder(manifest);
+export const builder = new addonBuilder(manifest);
 
 // --------------------------- Shared Data Fetching --------------------------
-async function fetchStatusData(cfg) {
+export async function fetchStatusData(cfg) {
   const cacheMin = Number.isFinite(Number(cfg.cache_minutes))
     ? Math.max(1, Number(cfg.cache_minutes))
     : 45;
